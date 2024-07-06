@@ -6,10 +6,6 @@ Bienvenido a Utility Streamer, una plataforma diseñada para simplificar la gest
 
 ## Funcionalidades
 
-### Gestionar el Chat
-
-Esta utilidad te permite gestionar los chats de YouTube y Twitch desde una sola interfaz. Puedes visualizar los mensajes, enviar respuestas y utilizar emoticonos personalizados. 
-
 ### Ver el Chat
 
 Esta utilidad te permite ver los chats de YouTube y Twitch como un Overlay para tu OBS. Utiliza los servicios de WebSocket de Streamer.bot para captar los mensajes de chat. Asegúrate de configurar correctamente Streamer.bot antes de usar esta función.
@@ -39,6 +35,14 @@ Si te gusta este proyecto y quieres ayudarme a seguir desarrollándolo, puedes a
 - [YouTube: ShadoTerro Hobby](https://www.youtube.com/@ShadoTerroHobby)
 
 Tu apoyo es muy importante y me ayuda a seguir mejorando y añadiendo más funcionalidades a Utility Streamer.
+
+## Actualizaciones y Mejoras
+
+Realizaré cambios y mejoras en la plataforma según identifique errores o encuentre oportunidades para optimizar el sistema. Mantente atento a las actualizaciones para disfrutar de las mejores funcionalidades y rendimiento.
+
+## Exención de Responsabilidad
+
+Utility Streamer se proporciona "tal cual" y "según disponibilidad". El uso de esta herramienta es bajo tu propio riesgo. No soy responsable por cualquier daño o pérdida que pueda surgir del uso de Utility Streamer. Aunque utilizo esta herramienta sin problemas, el rendimiento puede variar dependiendo de tu configuración y entorno específico.
 
 ## Licencia
 
