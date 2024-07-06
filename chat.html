@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Overlay</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent; /* Fondo transparente */
+        }
+        #chat {
+            width: 100%;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            color: white;
+            background: transparent; /* Fondo transparente */
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.274);
+            animation: slideIn 1s ease-out, fadeOut 25s forwards;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+        .username {
+            font-weight: bold;
+            margin-right: 10px;
+            padding: 5px;
+            border-radius: 5px;
+            background-color: #ff0000; /* Ajuste del color de fondo para YouTube */
+            color: #000000;
+        }
+        .message-text {
+            padding: 5px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            color: #00000094;
+            white-space: pre-wrap;
+        }
+        .badges img, .platform-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .profile-image {
+            width: 40px; /* Tamaño agrandado */
+            height: 40px; /* Tamaño agrandado */
+            margin-right: 5px;
+            border-radius: 50%; /* Para hacer la imagen circular */
+        }
+        .message-content {
+            display: flex;
+            flex-direction: column;
+        }
+        .emote {
+            width: 28px;
+            height: 28px;
+        }
+        .badge-container {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+    </style>
+    <script src="youtubeEmotes.js"></script>
+</head>
+<body>
+    <div id="chat"></div>
+    <script src="https://unpkg.com/@streamerbot/client@1.5.1/dist/streamerbot-client.js"></script>
+    <script>
+        const chat = document.getElementById('chat');
+
+        function addMessage(platform, displayName, message, badges, emotes, color, profileImageUrl) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+
+            const platformIcon = document.createElement('img');
+            platformIcon.className = 'platform-icon';
+            platformIcon.src = platform === 'YouTube' 
+                ? 'https://cdn-icons-png.flaticon.com/512/1383/1383260.png'
+                : 'https://cdn-icons-png.flaticon.com/512/15789/15789312.png';
+
+            const badgeContainer = document.createElement('div');
+            badgeContainer.className = 'badge-container';
+            badgeContainer.appendChild(platformIcon);
+
+            if (profileImageUrl) {
+                const profileImage = document.createElement('img');
+                profileImage.className = 'profile-image';
+                profileImage.src = profileImageUrl;
+                badgeContainer.appendChild(profileImage);
+            }
+
+            const badgesDiv = document.createElement('div');
+            badgesDiv.className = 'badges';
+            badges.forEach(badge => {
+                const img = document.createElement('img');
+                img.src = badge.imageUrl;
+                badgesDiv.appendChild(img);
+            });
+
+            badgeContainer.appendChild(badgesDiv);
+
+            const usernameSpan = document.createElement('span');
+            usernameSpan.className = 'username';
+            usernameSpan.textContent = displayName;
+            usernameSpan.style.backgroundColor = color;
+
+            const messageContentDiv = document.createElement('div');
+            messageContentDiv.className = 'message-content';
+
+            const processYouTubeMessage = (text) => {
+                return text.split(/(:[a-zA-Z0-9-_]+:)/g).map(part => {
+                    if (youtubeEmotes[part]) {
+                        return `<img src="${youtubeEmotes[part]}" class="emote">`;
+                    }
+                    return part;
+                }).join('');
+            };
+
+            const processTwitchMessage = (text) => {
+                let formattedMessage = text;
+                emotes.forEach(emote => {
+                    const emoteTag = `<img src="${emote.imageUrl}" class="emote">`;
+                    const emoteRegex = new RegExp(`\\b${emote.name}\\b`, 'g');
+                    formattedMessage = formattedMessage.replace(emoteRegex, emoteTag);
+                });
+                return formattedMessage;
+            };
+
+            const maxLineLength = 40;
+            let formattedMessage = '';
+            let currentLineLength = 0;
+            const processMessage = platform === 'YouTube' ? processYouTubeMessage : processTwitchMessage;
+            message.split(' ').forEach(word => {
+                if (currentLineLength + word.length + 1 > maxLineLength) {
+                    formattedMessage += '\n';
+                    currentLineLength = 0;
+                }
+                formattedMessage += processMessage(word) + ' ';
+                currentLineLength += word.length + 1;
+            });
+
+            const messageText = document.createElement('div');
+            messageText.className = 'message-text';
+            messageText.innerHTML = formattedMessage.trim();
+
+            messageContentDiv.appendChild(usernameSpan);
+            messageContentDiv.appendChild(messageText);
+            messageDiv.appendChild(badgeContainer);
+            messageDiv.appendChild(messageContentDiv);
+
+            chat.appendChild(messageDiv);
+            chat.scrollTop = chat.scrollHeight;
+
+            // Eliminar el mensaje después de 25 segundos
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 25000);
+        }
+
+        const client = new StreamerbotClient({
+            host: '127.0.0.1',
+            port: 8080,
+            endpoint: '/',
+            subscribe: {
+                'YouTube': ['Message'],
+                'Twitch': ['ChatMessage']
+            },
+            onConnect: (data) => {
+                console.log('Connected to Streamer.bot WebSocket server', data);
+            },
+            onDisconnect: () => {
+                console.warn('Streamer.bot Client Disconnected!');
+            },
+            onError: (err) => {
+                console.error('Streamer.bot Client Error', err);
+            },
+            onData: (data) => {
+                console.log('Streamer.bot Data Received', data);
+                if (data.event.source === 'YouTube' && data.event.type === 'Message') {
+                    const { message, user } = data.data;
+                    const displayName = user.name;
+                    const color = '#FF0000'; // Red for YouTube
+                    const badges = []; // You can add YouTube badges here if any
+                    const emotes = []; // Process YouTube emotes if any
+                    const profileImageUrl = user.profileImageUrl;
+                    addMessage('YouTube', displayName, message, badges, emotes, color, profileImageUrl);
+                } else if (data.event.source === 'Twitch' && data.event.type === 'ChatMessage') {
+                    const { displayName, message, badges, emotes, color } = data.data.message;
+                    addMessage('Twitch', displayName, message, badges, emotes, color, '');
+                }
+            }
+        });
+
+        client.connect();
+    </script>
+</body>
+</html>
