@@ -114,6 +114,22 @@
     <script src="https://unpkg.com/@streamerbot/client@1.5.1/dist/streamerbot-client.js"></script>
     <script>
         const chat = document.getElementById('chat');
+        let allowedUsers = new Set(JSON.parse(localStorage.getItem('allowedUsers')) || []);
+        let selectedVoice = localStorage.getItem('selectedVoice') || '';
+        let voices = [];
+
+        function saveAllowedUsers() {
+            localStorage.setItem('allowedUsers', JSON.stringify([...allowedUsers]));
+        }
+
+        function updateVoices() {
+            voices = speechSynthesis.getVoices();
+        }
+
+        updateVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = updateVoices;
+        }
 
         function addMessage(platform, displayName, message, badges, emotes, color, profileImageUrl) {
             const messageDiv = document.createElement('div');
@@ -212,8 +228,93 @@
                 redeemMessage += ` Mensaje: ${userInput}`;
             }
 
-            addMessage('Twitch', user_name , redeemMessage, [], [], '#9146FF', '');
+            addMessage('Twitch', user_name, redeemMessage, [], [], '#9146FF', '');
         }
+        function processCommand(platform, displayName, message, isOwner) {
+            if (!isOwner) {
+                addMessage(platform, 'Sistema', `${displayName}, solo el propietario del canal puede usar estos comandos.`, [], [], '#FF0000', '');
+                return;
+            }
+
+            const [command, ...args] = message.split(' ');
+            const input = args.join(' ').trim();
+
+            switch (command.toLowerCase()) {
+                case '!agregar':
+                    if (input) {
+                        allowedUsers.add(input);
+                        saveAllowedUsers();
+                        addMessage(platform, 'Sistema', `"${input}" ha sido agregado a la lista de usuarios permitidos.`, [], [], '#00FF00', '');
+                    } else {
+                        addMessage(platform, 'Sistema', 'Por favor, proporciona un nombre de usuario después del comando !agregar.', [], [], '#FF0000', '');
+                    }
+                    break;
+                case '!eliminar':
+                    if (input) {
+                        if (allowedUsers.has(input)) {
+                            allowedUsers.delete(input);
+                            saveAllowedUsers();
+                            addMessage(platform, 'Sistema', `"${input}" ha sido eliminado de la lista de usuarios permitidos.`, [], [], '#FF0000', '');
+                        } else {
+                            addMessage(platform, 'Sistema', `"${input}" no estaba en la lista de usuarios permitidos.`, [], [], '#FF0000', '');
+                        }
+                    } else {
+                        addMessage(platform, 'Sistema', 'Por favor, proporciona un nombre de usuario después del comando !eliminar.', [], [], '#FF0000', '');
+                    }
+                    break;
+                case '!voces':
+                    listVoices(platform);
+                    break;
+                case '!seleccionarvoz':
+                    if (input) {
+                        selectVoice(platform, input);
+                    } else {
+                        addMessage(platform, 'Sistema', "Por favor, proporciona el número o nombre de la voz después del comando !seleccionarvoz.", [], [], '#FF0000', '');
+                    }
+                    break;
+                default:
+                    addMessage(platform, 'Sistema', `Comando desconocido: ${command}`, [], [], '#FF0000', '');
+            }
+        }
+
+        function listVoices(platform) {
+            let voiceList = "Voces disponibles:\n";
+            voices.forEach((voice, index) => {
+                voiceList += `${index + 1}. ${voice.name} (${voice.lang})\n`;
+            });
+            addMessage(platform, 'Sistema', voiceList, [], [], '#00FF00', '');
+            speakMessage("Este es el listado de voces disponibles.");
+        }
+
+        function selectVoice(platform, input) {
+            let selectedVoiceIndex;
+            if (!isNaN(input) && parseInt(input) > 0 && parseInt(input) <= voices.length) {
+                // Si el input es un número válido, seleccionamos la voz por índice
+                selectedVoiceIndex = parseInt(input) - 1;
+            } else {
+                // Si no es un número, buscamos por nombre
+                selectedVoiceIndex = voices.findIndex(v => v.name.toLowerCase().includes(input.toLowerCase()));
+            }
+
+            if (selectedVoiceIndex !== -1) {
+                selectedVoice = voices[selectedVoiceIndex].name;
+                localStorage.setItem('selectedVoice', selectedVoice);
+                addMessage(platform, 'Sistema', `Voz seleccionada: ${selectedVoice}`, [], [], '#00FF00', '');
+                speakMessage("Esta es la nueva voz seleccionada.");
+            } else {
+                addMessage(platform, 'Sistema', `Voz no encontrada: ${input}. Por favor, usa el número o el nombre de la voz.`, [], [], '#FF0000', '');
+            }
+        }
+
+
+        function speakMessage(message) {
+            const utterance = new SpeechSynthesisUtterance(message);
+            const voice = voices.find(v => v.name === selectedVoice) || voices[0];
+            utterance.voice = voice;
+            utterance.lang = voice.lang;
+            speechSynthesis.speak(utterance);
+        }
+
 
         const client = new StreamerbotClient({
             host: '127.0.0.1',
@@ -241,13 +342,28 @@
                     const badges = [];
                     const emotes = [];
                     const profileImageUrl = user.profileImageUrl;
-                    addMessage('YouTube', displayName, message, badges, emotes, color, profileImageUrl);
+                    const isOwner = user.isOwner;
+
+                    if (message.startsWith('!')) {
+                        processCommand('YouTube', displayName, message, isOwner);
+                    } else {
+                        addMessage('YouTube', displayName, message, badges, emotes, color, profileImageUrl);
+                        if (allowedUsers.has(displayName)) {
+                            speakMessage(`${displayName} dice: ${message}`);
+                        }
+                    }
                 } else if (data.event.type === 'RewardRedemption') {
                     handleRewardRedemption(data.data);
-
                 } else if (data.event.source === 'Twitch' && data.event.type === 'ChatMessage') {
                     const { displayName, message, badges, emotes, color } = data.data.message;
-                    addMessage('Twitch', displayName, message, badges, emotes, color, '');
+                    // Nota: Aquí asumimos que no tenemos acceso a isOwner para Twitch
+                    const isOwner = false; // Cambia esto si tienes la información de propietario para Twitch
+
+                    if (message.startsWith('!')) {
+                        processCommand('Twitch', displayName, message, isOwner);
+                    } else {
+                        addMessage('Twitch', displayName, message, badges, emotes, color, '');
+                    }
                 }
             }
         });
