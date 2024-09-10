@@ -110,48 +110,20 @@
 
 <body>
     <div id="status">Cargando prueba de audio...</div>
-    <div id="chat"></div>
-       <script>
-        let audioContext;
-        let oscillator;
-
-        function initAudio() {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
-        function playTone() {
-            if (!audioContext) {
-                initAudio();
-            }
-
-            // Detener el oscilador anterior si existe
-            if (oscillator) {
-                oscillator.stop();
-            }
-
-            oscillator = audioContext.createOscillator();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // 440 Hz es La4
-            oscillator.connect(audioContext.destination);
-            oscillator.start();
-
-            // Detener el tono después de 1 segundo
-            setTimeout(() => {
-                oscillator.stop();
-                document.getElementById('status').textContent = 'Prueba de audio completada. Si escuchaste un tono, el audio está funcionando correctamente.';
-            }, 1000);
-        }
-
-        // Agregar evento para que la prueba de audio se ejecute cuando la página se cargue
-        window.onload = function() {
-            document.getElementById('status').textContent = 'Iniciando prueba de audio...';
-            // Pequeño retraso para asegurar que el contexto de audio se pueda inicializar
-            setTimeout(playTone, 500);
-        };
-    </script>
+  
     <script src="https://unpkg.com/@streamerbot/client@1.5.1/dist/streamerbot-client.js"></script>
     <script>
-    
+    // Función para probar si el audio de SpeechSynthesis está funcionando
+    function testAudio() {
+        const utterance = new SpeechSynthesisUtterance('Prueba de audio. El sistema de sonido está funcionando correctamente.');
+        utterance.lang = 'es-ES';  // Configura el idioma, en este caso español.
+        speechSynthesis.speak(utterance);
+    }
+
+    // Agregar evento para que la prueba de audio se ejecute cuando la página se cargue
+    window.onload = function() {
+        testAudio();
+    };
         const chat = document.getElementById('chat');
         let allowedUsers = new Set(JSON.parse(localStorage.getItem('allowedUsers')) || []);
         let selectedVoice = localStorage.getItem('selectedVoice') || '';
