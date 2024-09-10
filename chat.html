@@ -109,21 +109,10 @@
 </head>
 
 <body>
-    <div id="status">Cargando prueba de audio...</div>
-  
+    <div id="chat"></div>
+
     <script src="https://unpkg.com/@streamerbot/client@1.5.1/dist/streamerbot-client.js"></script>
     <script>
-    // Función para probar si el audio de SpeechSynthesis está funcionando
-    function testAudio() {
-        const utterance = new SpeechSynthesisUtterance('Prueba de audio. El sistema de sonido está funcionando correctamente.');
-        utterance.lang = 'es-ES';  // Configura el idioma, en este caso español.
-        speechSynthesis.speak(utterance);
-    }
-
-    // Agregar evento para que la prueba de audio se ejecute cuando la página se cargue
-    window.onload = function() {
-        testAudio();
-    };
         const chat = document.getElementById('chat');
         let allowedUsers = new Set(JSON.parse(localStorage.getItem('allowedUsers')) || []);
         let selectedVoice = localStorage.getItem('selectedVoice') || '';
@@ -241,6 +230,27 @@
 
             addMessage('Twitch', user_name, redeemMessage, [], [], '#9146FF', '');
         }
+
+
+        function showListado(platform) {
+            let listadoMessage = "Listado actual:\n\n";
+
+            // Mostrar la voz seleccionada
+            listadoMessage += `Voz seleccionada: ${selectedVoice || "Ninguna"}\n\n`;
+
+            // Mostrar la lista de usuarios permitidos
+            listadoMessage += "Usuarios permitidos:\n";
+            if (allowedUsers.size > 0) {
+                [...allowedUsers].forEach(user => {
+                    listadoMessage += `- ${user}\n`;
+                });
+            } else {
+                listadoMessage += "No hay usuarios permitidos.\n";
+            }
+
+            addMessage(platform, 'Sistema', listadoMessage, [], [], '#00FF00', '');
+        }
+
         function processCommand(platform, displayName, message, isOwner) {
             if (!isOwner) {
                 addMessage(platform, 'Sistema', `${displayName}, solo el propietario del canal puede usar estos comandos.`, [], [], '#FF0000', '');
@@ -282,6 +292,9 @@
                     } else {
                         addMessage(platform, 'Sistema', "Por favor, proporciona el número o nombre de la voz después del comando !seleccionarvoz.", [], [], '#FF0000', '');
                     }
+                    break;
+                case '!listado':
+                    showListado(platform);
                     break;
                 default:
                     addMessage(platform, 'Sistema', `Comando desconocido: ${command}`, [], [], '#FF0000', '');
