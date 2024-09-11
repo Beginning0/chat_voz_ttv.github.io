@@ -373,7 +373,7 @@
                     } else {
                         addMessage('YouTube', displayName, message, badges, emotes, color, profileImageUrl);
                         if (allowedUsers.has(displayName)) {
-                            speakMessage(`${displayName} dice: ${message}`);
+                            speakMessage(`${displayName} , ${message}`);
                         }
                     }
                 } else if (data.event.type === 'RewardRedemption') {
