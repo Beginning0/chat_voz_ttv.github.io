@@ -117,6 +117,7 @@
         let allowedUsers = new Set(JSON.parse(localStorage.getItem('allowedUsers')) || []);
         let selectedVoice = localStorage.getItem('selectedVoice') || '';
         let voices = [];
+        let volume = 100; // Añadimos una variable para almacenar el volumen actual
 
         function saveAllowedUsers() {
             localStorage.setItem('allowedUsers', JSON.stringify([...allowedUsers]));
@@ -296,9 +297,32 @@
                 case '!listado':
                     showListado(platform);
                     break;
+                case '!volumen':
+                    if (input) {
+                        const newVolume = parseInt(input);
+                        if (!isNaN(newVolume) && newVolume >= 0 && newVolume <= 100) {
+                            volume = newVolume;
+                            addMessage(platform, 'Sistema', `Volumen ajustado al ${volume}%.`, [], [], '#00FF00', '');
+                        } else {
+                            addMessage(platform, 'Sistema', 'Por favor, proporciona un número válido entre 0 y 100 para el volumen.', [], [], '#FF0000', '');
+                        }
+                    } else {
+                        addMessage(platform, 'Sistema', 'Por favor, proporciona un número después del comando !volumen.', [], [], '#FF0000', '');
+                    }
+                    break;
                 default:
                     addMessage(platform, 'Sistema', `Comando desconocido: ${command}`, [], [], '#FF0000', '');
             }
+        }
+
+        
+        function speakMessage(message) {
+            const utterance = new SpeechSynthesisUtterance(message);
+            const voice = voices.find(v => v.name === selectedVoice) || voices[0];
+            utterance.voice = voice;
+            utterance.lang = voice.lang;
+            utterance.volume = volume / 100; // Aplicamos el volumen ajustado
+            speechSynthesis.speak(utterance);
         }
 
         function listVoices(platform) {
@@ -328,15 +352,6 @@
             } else {
                 addMessage(platform, 'Sistema', `Voz no encontrada: ${input}. Por favor, usa el número o el nombre de la voz.`, [], [], '#FF0000', '');
             }
-        }
-
-
-        function speakMessage(message) {
-            const utterance = new SpeechSynthesisUtterance(message);
-            const voice = voices.find(v => v.name === selectedVoice) || voices[0];
-            utterance.voice = voice;
-            utterance.lang = voice.lang;
-            speechSynthesis.speak(utterance);
         }
 
 
