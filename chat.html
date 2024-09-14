@@ -117,7 +117,7 @@
         let allowedUsers = new Set(JSON.parse(localStorage.getItem('allowedUsers')) || []);
         let selectedVoice = localStorage.getItem('selectedVoice') || '';
         let voices = [];
-        let volume = 100; // Añadimos una variable para almacenar el volumen actual
+        let volume = 30; // Añadimos una variable para almacenar el volumen actual
 
         function saveAllowedUsers() {
             localStorage.setItem('allowedUsers', JSON.stringify([...allowedUsers]));
