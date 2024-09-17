@@ -104,6 +104,15 @@
             align-items: center;
             margin-right: 10px;
         }
+
+        .voice-enabled-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            /* content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFA500"><path d="M12 15c1.66 0 3-1.34 3-3V6c0-1.66-1.34-3-3-3S9 4.34 9 6v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V6z"/><path d="M17 12c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-2.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>'); */
+
+            content: url('https://w7.pngwing.com/pngs/740/869/png-transparent-wireless-microphone-drawing-mic-electronics-microphone-recording-studio-thumbnail.png');
+        }
     </style>
     <script src="youtubeEmotes.js"></script>
 </head>
@@ -118,6 +127,7 @@
         let selectedVoice = localStorage.getItem('selectedVoice') || '';
         let voices = [];
         let volume = 30; // Añadimos una variable para almacenar el volumen actual
+        let voiceEnabled = localStorage.getItem('voiceEnabled') === 'true'; // Nuevo: Estado de la voz
 
         function saveAllowedUsers() {
             localStorage.setItem('allowedUsers', JSON.stringify([...allowedUsers]));
@@ -145,13 +155,20 @@
             const badgeContainer = document.createElement('div');
             badgeContainer.className = 'badge-container';
             badgeContainer.appendChild(platformIcon);
-
+            
+            // Añadir icono de voz si el usuario está en la lista de permitidos
+            if (allowedUsers.has(displayName)) {
+                const voiceIcon = document.createElement('div');
+                voiceIcon.className = 'voice-enabled-icon';
+                badgeContainer.appendChild(voiceIcon);
+            }
             if (profileImageUrl) {
                 const profileImage = document.createElement('img');
                 profileImage.className = 'profile-image';
                 profileImage.src = profileImageUrl;
                 badgeContainer.appendChild(profileImage);
             }
+
 
             const badgesDiv = document.createElement('div');
             badgesDiv.className = 'badges';
@@ -310,18 +327,30 @@
                         addMessage(platform, 'Sistema', 'Por favor, proporciona un número después del comando !volumen.', [], [], '#FF0000', '');
                     }
                     break;
+                case '!voz':
+                    toggleVoice(platform);
+                    break;
                 default:
                     addMessage(platform, 'Sistema', `Comando desconocido: ${command}`, [], [], '#FF0000', '');
             }
         }
 
-        
+
+        function toggleVoice(platform) {
+            voiceEnabled = !voiceEnabled;
+            localStorage.setItem('voiceEnabled', voiceEnabled);
+            const status = voiceEnabled ? 'activada' : 'desactivada';
+            addMessage(platform, 'Sistema', `La voz ha sido ${status}.`, [], [], '#00FF00', '');
+        }
+
+
         function speakMessage(message) {
+            if (!voiceEnabled) return; // No hablar si la voz está desactivada
             const utterance = new SpeechSynthesisUtterance(message);
             const voice = voices.find(v => v.name === selectedVoice) || voices[0];
             utterance.voice = voice;
             utterance.lang = voice.lang;
-            utterance.volume = volume / 100; // Aplicamos el volumen ajustado
+            utterance.volume = volume / 100;
             speechSynthesis.speak(utterance);
         }
 
