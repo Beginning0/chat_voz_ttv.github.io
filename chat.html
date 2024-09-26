@@ -272,14 +272,22 @@
         }
 
         function processCommand(platform, displayName, message, isOwner) {
-            if (!isOwner) {
-                addMessage(platform, 'Sistema', `${displayName}, solo el propietario del canal puede usar estos comandos.`, [], [], '#FF0000', '');
-                return;
-            }
+
 
             const [command, ...args] = message.split(' ');
             const input = args.join(' ').trim();
 
+            // Verificación si el comando es exclusivo de Minecraft (empieza con !mc_)
+            if (command.startsWith('!mc_')) {
+                addMessage(platform, 'Sistema', `${displayName}, Mando Comando exclusivo de Minecraft: ${command}`, [], [], '##9146FF', '');
+                return;
+            }
+
+            if (!isOwner) {
+                addMessage(platform, 'Sistema', `${displayName}, solo el propietario del canal puede usar estos comandos.`, [], [], '#FF0000', '');
+                return;
+            }
+            
             switch (command.toLowerCase()) {
                 case '!agregar':
                     if (input) {
