@@ -145,6 +145,12 @@
         }
 
     function addMessage(platform, displayName, message, badges, emotes, color, profileImageUrl) {
+        // Verificar si el mensaje contiene una URL
+            const urlPattern = /https?:\/\/[^\s]+/;
+            if (urlPattern.test(message)) {
+                return; // No agregar el mensaje si contiene una URL
+            }
+        
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
 
